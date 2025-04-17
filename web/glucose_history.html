@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Glucose Data History</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #003366;
+        }
+        .session {
+            margin-bottom: 30px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .hyperglycemia { color: darkorange; font-weight: bold; }
+        .mild-hypoglycemia { color: goldenrod; font-weight: bold; }
+        .severe-hypoglycemia { color: darkblue; font-weight: bold; }
+        .normal { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Glucose Data History (Past 10 Days)</h1>
+    <div id="sessions-container">
+        <p>Loading data...</p>
+    </div>
+
+    <script>
+        // Your Firebase configuration - REPLACE THIS with your actual Firebase config
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyCwXKHDjVlxQ6stxQKUrkEppLjXrypb4vY",
+            authDomain: "diabetesmonitor-674cf.firebaseapp.com",
+            projectId: "diabetesmonitor-674cf",
+            storageBucket: "diabetesmonitor-674cf.firebasestorage.app",
+            messagingSenderId: "906545759736",
+            appId: "1:906545759736:web:6a886d6f9ca8b1ea48420d",
+            measurementId: "G-VRTP0JQPXM"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Add debugging
+        console.log("Firebase initialized, attempting to load sessions");
+
+        // Get and display sessions
+        async function loadSessions() {
+            const sessionsContainer = document.getElementById('sessions-container');
+            sessionsContainer.innerHTML = ''; // Clear loading message
+
+            try {
+                const sessionSnapshot = await db.collection('glucose_sessions')
+                    .orderBy('start_time', 'desc')
+                    .limit(10)
+                    .get();
+
+                console.log("Retrieved sessions:", sessionSnapshot.size);
+
+                if (sessionSnapshot.empty) {
+                    sessionsContainer.innerHTML = '<p>No data available yet.</p>';
+                    return;
+                }
+
+                sessionSnapshot.forEach(doc => {
+                    const sessionData = doc.data();
+                    console.log("Session data:", sessionData);
+                    console.log("Readings:", sessionData.readings ? sessionData.readings.length : "none");
+
+                    const sessionElement = document.createElement('div');
+                    sessionElement.className = 'session';
+
+                    // Format start time
+                    let formattedDate = "Unknown date";
+                    let formattedTime = "Unknown time";
+
+                    try {
+                        if (sessionData.start_time && typeof sessionData.start_time.toDate === 'function') {
+                            // Handle Firestore Timestamp objects
+                            const startTime = sessionData.start_time.toDate();
+                            formattedDate = startTime.toLocaleDateString();
+                            formattedTime = startTime.toLocaleTimeString();
+                        } else if (sessionData.start_time && sessionData.start_time._seconds) {
+                            // Handle Firestore Timestamp in JSON format
+                            const startTime = new Date(sessionData.start_time._seconds * 1000);
+                            formattedDate = startTime.toLocaleDateString();
+                            formattedTime = startTime.toLocaleTimeString();
+                        } else if (sessionData.start_time && sessionData.start_time.seconds) {
+                            // Another possible Firestore Timestamp format
+                            const startTime = new Date(sessionData.start_time.seconds * 1000);
+                            formattedDate = startTime.toLocaleDateString();
+                            formattedTime = startTime.toLocaleTimeString();
+                        } else if (sessionData.start_time) {
+                            // Try direct parsing if it's a string or other format
+                            const startTime = new Date(sessionData.start_time);
+                            if (!isNaN(startTime)) {
+                                formattedDate = startTime.toLocaleDateString();
+                                formattedTime = startTime.toLocaleTimeString();
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error formatting session start time:", error, sessionData.start_time);
+                    }
+
+                    // Session header
+                    sessionElement.innerHTML = `
+                        <h2>${sessionData.device_type} Session - ${formattedDate} ${formattedTime}</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Glucose (mg/dL)</th>
+                                    <th>Prediction (mg/dL)</th>
+                                    <th>Glucose State</th>
+                                    <th>Protocol Activated</th>
+                                </tr>
+                            </thead>
+                            <tbody id="readings-${doc.id}">
+                            </tbody>
+                        </table>
+                    `;
+
+                    sessionsContainer.appendChild(sessionElement);
+
+                    // Add readings
+                    const readingsTableBody = document.getElementById(`readings-${doc.id}`);
+                    if (sessionData.readings && sessionData.readings.length > 0) {
+                        sessionData.readings.forEach(reading => {
+                            const row = document.createElement('tr');
+
+                            // Format time with improved error handling
+                            let readingTimeFormatted = 'N/A';
+                            try {
+                                if (reading.time && typeof reading.time.toDate === 'function') {
+                                    // This handles Firestore Timestamp objects
+                                    const readingTime = reading.time.toDate();
+                                    readingTimeFormatted = readingTime.toLocaleTimeString();
+                                } else if (reading.time && reading.time._seconds) {
+                                    // This handles Firestore Timestamp in JSON format
+                                    const readingTime = new Date(reading.time._seconds * 1000);
+                                    readingTimeFormatted = readingTime.toLocaleTimeString();
+                                } else if (reading.time && reading.time.seconds) {
+                                    // Another possible Firestore Timestamp format
+                                    const readingTime = new Date(reading.time.seconds * 1000);
+                                    readingTimeFormatted = readingTime.toLocaleTimeString();
+                                } else if (reading.time) {
+                                    // Try parsing directly if it's a string or other format
+                                    const readingTime = new Date(reading.time);
+                                    if (!isNaN(readingTime)) {
+                                        readingTimeFormatted = readingTime.toLocaleTimeString();
+                                    }
+                                }
+                                console.log("Reading time parsed:", readingTimeFormatted);
+                            } catch (error) {
+                                console.error("Error parsing time:", error, reading.time);
+                            }
+
+                            // Determine state class
+                            let stateClass = '';
+                            if (reading.state === "Hyperglycemia") stateClass = 'hyperglycemia';
+                            else if (reading.state === "Mild Hypoglycemia") stateClass = 'mild-hypoglycemia';
+                            else if (reading.state === "Severe Hypoglycemia") stateClass = 'severe-hypoglycemia';
+                            else if (reading.state === "Normal") stateClass = 'normal';
+
+                            row.innerHTML = `
+                                <td>${readingTimeFormatted}</td>
+                                <td>${reading.glucose}</td>
+                                <td>${reading.prediction || '-'}</td>
+                                <td class="${stateClass}">${reading.state}</td>
+                                <td>${reading.protocol_activated ? 'Yes' : 'No'}</td>
+                            `;
+
+                            readingsTableBody.appendChild(row);
+                        });
+                    } else {
+                        readingsTableBody.innerHTML = '<tr><td colspan="5">No readings available</td></tr>';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error loading sessions:", error);
+                console.error("Full error:", JSON.stringify(error));
+                sessionsContainer.innerHTML = '<p>Error loading data. Please try again later.</p>';
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadSessions);
+    </script>
+</body>
+</html>
