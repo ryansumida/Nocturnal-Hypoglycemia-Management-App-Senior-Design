@@ -99,7 +99,7 @@ def create_settings_tab(app):
     )
     main_content.add(infusion_max_box)
 
-    # Alert Volume.
+    # Alert Volume (consolidated from previous alert_volume and alarm_volume).
     app.volume_input = toga.Selection(
         items=['Low', 'Medium', 'High'],
         value=app.settings['alert_volume'],
@@ -111,19 +111,6 @@ def create_settings_tab(app):
         ''
     )
     main_content.add(volume_box)
-
-    # Alarm Volume - new setting for hyperglycemia protocol
-    app.alarm_volume_input = toga.Selection(
-        items=['Low', 'Medium', 'High'],
-        value=app.settings.get('alarm_volume', 'Medium'),  # Default to Medium if not set
-        style=Pack(background_color='white')
-    )
-    alarm_volume_box = create_setting_row(
-        'Alarm Volume:',
-        app.alarm_volume_input,
-        ''
-    )
-    main_content.add(alarm_volume_box)
 
     # Reduced spacer.
     main_content.add(toga.Box(style=Pack(height=8, background_color='#F0F0F0')))
@@ -140,7 +127,7 @@ def create_settings_tab(app):
     )
     main_content.add(pump_heading)
 
-    # Glucagon Dosage.
+    # Glucagon Dosage (changed units from mg to mL).
     app.glucagon_input = toga.TextInput(
         value=app.settings['glucagon_dosage'],
         placeholder='0.2',
@@ -149,7 +136,7 @@ def create_settings_tab(app):
     glucagon_box = create_setting_row(
         'Glucagon Dosage (5 mg/mL):',
         app.glucagon_input,
-        'mg'
+        'mL'  # Changed from 'mg' to 'mL'
     )
     main_content.add(glucagon_box)
 
@@ -424,7 +411,8 @@ def save_settings(app):
     app.settings['hypoglycemia_threshold'] = app.hypo_input.value
     app.settings['severe_hypoglycemia_threshold'] = app.severe_hypo_input.value
     app.settings['alert_volume'] = app.volume_input.value
-    app.settings['alarm_volume'] = app.alarm_volume_input.value.lower()  # Save in lowercase for the protocol
+    # Store alert_volume in both settings to maintain compatibility
+    app.settings['alarm_volume'] = app.volume_input.value.lower()  # Save in lowercase for protocols
     app.settings['glucagon_dosage'] = app.glucagon_input.value
     app.main_window.info_dialog(
         'Settings Saved',

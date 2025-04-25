@@ -49,6 +49,7 @@ scroll_container = None
 app_instance = None  # Store app instance for getting settings
 glucagon_delivery_status = None  # Label to show glucagon delivery status
 glucagon_button = None  # Store reference to glucagon button
+glucagon_stop_button = None  # Store reference to stop glucagon button
 delivery_in_progress = False  # Flag to prevent multiple simultaneous deliveries
 
 
@@ -71,7 +72,7 @@ async def send_emergency_sms(app):
             # Prepare the request data
             data = {
                 'phone': emergency_contact,
-                'message': 'Test Text',
+                'message': f"Patient has requested assistance.",
                 'key': TEXTBELT_API_KEY
             }
 
@@ -260,7 +261,7 @@ def update_loop():
 
 async def monitor_pump_connection(app):
     """Background task to update pump connection status and button state."""
-    global glucagon_button, glucagon_delivery_status
+    global glucagon_button, glucagon_delivery_status, glucagon_stop_button
 
     # Wait a bit for UI to initialize
     await asyncio.sleep(1)
@@ -338,11 +339,65 @@ async def monitor_pump_connection(app):
         await asyncio.sleep(2)
 
 
-async def control_motor_delivery(app, dose):
-    """Control the motor to deliver glucagon."""
-    global delivery_in_progress, glucagon_delivery_status, glucagon_button
+async def stop_glucagon_delivery(app):
+    """Stop ongoing glucagon delivery."""
+    global delivery_in_progress, glucagon_delivery_status, glucagon_button, glucagon_stop_button
 
     try:
+        # Update status
+        if glucagon_delivery_status:
+            glucagon_delivery_status.text = "Stopping delivery..."
+            glucagon_delivery_status.style.color = "blue"
+
+        # Send command to stop motor
+        await connection_state.client.write_gatt_char(
+            MOTOR_CHARACTERISTIC_UUID,
+            "stop".encode()
+        )
+
+        # Update status after stopping
+        if glucagon_delivery_status:
+            glucagon_delivery_status.text = "Delivery stopped by user"
+            glucagon_delivery_status.style.color = "orange"
+
+        # Show confirmation dialog
+        await app.main_window.dialog(
+            toga.InfoDialog(
+                title='Delivery Stopped',
+                message='Glucagon delivery has been stopped.'
+            )
+        )
+        print("Glucagon delivery stopped by user")
+
+    except Exception as e:
+        error_message = f"Error stopping delivery: {str(e)}"
+        print(error_message)
+
+        await app.main_window.dialog(
+            toga.InfoDialog(
+                title='Error',
+                message=f'Could not stop delivery: {str(e)}'
+            )
+        )
+
+    finally:
+        # Reset delivery state
+        delivery_in_progress = False
+        if glucagon_button:
+            glucagon_button.enabled = connection_state.is_connected and not protocol_state.active
+        if glucagon_stop_button:
+            glucagon_stop_button.visible = False
+
+
+async def control_motor_delivery(app, dose):
+    """Control the motor to deliver glucagon."""
+    global delivery_in_progress, glucagon_delivery_status, glucagon_button, glucagon_stop_button
+
+    try:
+        # Show the stop button
+        if glucagon_stop_button:
+            glucagon_stop_button.visible = True
+
         # Update status
         if glucagon_delivery_status:
             glucagon_delivery_status.text = "Starting motor..."
@@ -359,8 +414,21 @@ async def control_motor_delivery(app, dose):
             glucagon_delivery_status.text = "Delivering glucagon..."
             glucagon_delivery_status.style.color = "blue"
 
-        # Wait 5 seconds while motor runs
-        await asyncio.sleep(5)
+        # Wait for delivery to complete or to be interrupted
+        # Using a loop to check if delivery_in_progress becomes False (stopped by user)
+        delivery_timeout = 5  # 5 seconds timeout
+        for _ in range(delivery_timeout):
+            if not delivery_in_progress:  # Check if stopped by user
+                return  # Exit the function if delivery was stopped
+            await asyncio.sleep(1)  # Check every second
+
+        # If we get here, delivery completed successfully
+
+        # Send command to stop motor (ensure it stops)
+        await connection_state.client.write_gatt_char(
+            MOTOR_CHARACTERISTIC_UUID,
+            "STOP".encode()
+        )
 
         # Delivery complete
         if glucagon_delivery_status:
@@ -396,11 +464,13 @@ async def control_motor_delivery(app, dose):
         delivery_in_progress = False
         if glucagon_button and connection_state.is_connected:
             glucagon_button.enabled = True
+        if glucagon_stop_button:
+            glucagon_stop_button.visible = False  # Hide stop button
 
 
 async def deliver_glucagon(app):
     """Handle the deliver glucagon button press."""
-    global delivery_in_progress, glucagon_delivery_status, glucagon_button
+    global delivery_in_progress, glucagon_delivery_status, glucagon_button, glucagon_stop_button
 
     # Check if automatic protocol is running
     if protocol_state.active:
@@ -462,7 +532,7 @@ async def deliver_glucagon(app):
 def create_glucose_tab(app):
     """Create and populate the glucose tab content."""
     global glucose_value_label, sample_time_label, glucose_status_label, avg_glucose_value_label, gmi_value_label
-    global scroll_container, app_instance, glucagon_delivery_status, glucagon_button
+    global scroll_container, app_instance, glucagon_delivery_status, glucagon_button, glucagon_stop_button
 
     # Store app reference for later
     app_instance = app
@@ -708,6 +778,21 @@ def create_glucose_tab(app):
     # Initially disable the button until pump is connected
     glucagon_button.enabled = False
     button_container.add(glucagon_button)
+
+    # Stop Glucagon Button - initially hidden
+    glucagon_stop_button = toga.Button(
+        'Stop Glucagon Delivery',
+        on_press=lambda widget: asyncio.create_task(stop_glucagon_delivery(app)),
+        style=Pack(
+            background_color='#FF4500',  # Orange-red color
+            color='white',
+            margin=5,
+            width=240,
+            font_size=16
+        )
+    )
+    glucagon_stop_button.visible = False  # Initially hidden
+    button_container.add(glucagon_stop_button)
 
     # Glucagon delivery status label
     glucagon_delivery_status = toga.Label(
