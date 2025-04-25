@@ -1,13 +1,3 @@
 {
-  "type": "service_account",
-  "project_id": "diabetesmonitor-674cf",
-  "private_key_id": "625ecb15dd920d18093e384f97a46e93b0851840",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCpyB6aFzPtbYvh\nXqIDQimGLnoCG5Ba1A3KBXIxFBNpvLMJddFOhmcpNn56YXDgFc8oS6omFjd00QM7\nK79cLJkfljz4BnheiLPE3Clm482V3RCdMXTU9YAEHUwveN9C82fZMrW7qFvrxhfJ\nf+PsRoc4B3NPla9X7mVsdk9DY1uP03YX4CUy+qokqkDK9M6vhB1F3MnY440d0d+1\nHaK3eJpaMu5fLgz5nCQIjzZ92nqh0sjBsjN2LdcFS7GAP+fuBD7E/7Rb5mtcEiWk\nPXmTv29K7rez4GtfYPTY6aLbQK7wAiW/K4FR/CTQ3XnVzIuX47rGT4N69O4e058Z\noeHXJokrAgMBAAECggEAF5kWD8rLz+Na/t8dW6CVju3kzWgxXz58EClDnuiwbhDp\nPZZfmi96JTNKzw2+F5dQbMRfiN2rpZPrhAznkxMr0UUbgkm77z/G5MTJCGD/USYh\nygd2uqbIvUmpLiv5tB+Kvpiaw9N5u0KUSdB5yHxhDPuUHmqqrWkYNcQX7kDgGBRM\n6uuSnmYZTCTcGa+dVMyDY9p65dMUm/y1sEMZP2AGEwt3Z0Mwsc0lahlP9Hsx0IqO\n+Jq+dCfhMb/p1KmpD37iTl5ALfMbxEMeoQPQzNrgunZ8Bll5NH1dUPJEdmwINd+e\n5cJfyBSwY6HHnlx/GRUM3vZnxHtHJX4rc8B/745foQKBgQDlp0yXcTzo9Wl9XUZB\nnx2MqrK16d+ql3iyQDzabuy1CHsulB5uVF+T6g/RKjsUTfW3L3QvibM8+do5bfqI\nUc0zAwEOlHD93AESzGC7nzh/qLDC7mG/SW/vRjn344k5ZVWfn9JCOM1Z6LYGRIfj\nJ5igtlS8IXAF7bHxAu8/nfe50QKBgQC9QnGd8g9gnLbD+aXsL0qYk84EEwuSvEVm\nwvUH9DLSQ0HP2ScPSWzPxJmzH+D8fr1ot6giecbdyTLr0NvoG3jJdASz4bpYziSb\n5yqfo+CgvG3U7yi+EscfwdtGHGDor83cnbmZowxS5Lh9UMtR3KFh88iQdzIfc3LD\nB0Ue8prWOwKBgQDDWBVcVGQdPHMoweh69R+rgZ9WAcPRVdrCtMWOgAA01SwCqNdh\nvb83EEe4AZYTZWT3FxRbQ2QFH/oyE4yh3AMRuyJxBm8+YJ9BIDvAHGVwoUsJ5L+c\neJkQDMpOQ2t8OOgmSUoOLkbujXYXyr9Tx2Cag7178W1afZ94hKiBkpsfoQKBgQCE\nmyx+bV8m40cPkzkVfqE2vMEpi6qdOnsqIEmNNCXzuxo+prk+dcTe4rKKljiO0cKm\nv5/33/ld5p5eKi4auDzucfLlkrB9jpqJ/fOYfTtjhAM0ogma/A83Ch44RqQEBUIp\nZP3pTxvQbN9zNovvJLaSqjwKNOoSrVJoogxlPbkNhwKBgBt8RSRQgIc51Wv4zbrp\nELkFAMDiB7ns70xm7nVJPdYD+JXzXyqewmVybg43+hMGAqmEwGNbRNIU1gE71/bS\nEGOZexde4OeG9Eg7lt7VsTazvICFpESFoGPESKGjn/hR7MhbeNvSZj7Ccv/7guSA\nPL9WAxMYpk+RotrNmMbfeDQS\n-----END PRIVATE KEY-----\n",
-  "client_email": "firebase-adminsdk-fbsvc@diabetesmonitor-674cf.iam.gserviceaccount.com",
-  "client_id": "113922747528345204621",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40diabetesmonitor-674cf.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
+// PASTE FIREBASE API KEY JSON FILE CONTENTS HERE
 }
